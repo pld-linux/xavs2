@@ -1,0 +1,149 @@
+--- xavs2-1.3/source/common/quant.c.orig	2018-12-20 04:20:35.000000000 +0100
++++ xavs2-1.3/source/common/quant.c	2019-07-29 20:07:07.159480992 +0200
+@@ -220,7 +220,7 @@
+     dctf->add_sign  = add_sign_c;
+ 
+     /* init asm function handles */
+-#if HAVE_MMX
++#if HAVE_MMX && ARCH_X86_64 /* only 64-bit asm for now */
+     if (cpuid & XAVS2_CPU_SSE4) {
+         dctf->quant     = FPFX(quant_sse4);
+         dctf->dequant   = FPFX(dequant_sse4);
+--- xavs2-1.3/source/common/filter_alf.c.orig	2018-12-20 04:20:35.000000000 +0100
++++ xavs2-1.3/source/common/filter_alf.c	2019-07-29 20:08:33.552346295 +0200
+@@ -236,7 +236,7 @@
+     /* set function handles */
+     pf->alf_flt[0] = alf_filter_block1;
+     pf->alf_flt[1] = alf_filter_block2;
+-#if HAVE_MMX
++#if HAVE_MMX && ARCH_X86_64 /* only 64-bit asm for now */
+     if (cpuid & XAVS2_CPU_SSE42) {
+         pf->alf_flt[0] = alf_flt_one_block_sse128;
+     }
+--- xavs2-1.3/source/common/filter_deblock.c.orig	2018-12-20 04:20:35.000000000 +0100
++++ xavs2-1.3/source/common/filter_deblock.c	2019-07-29 20:09:12.135470605 +0200
+@@ -526,7 +526,7 @@
+     lf->deblock_chroma[0] = deblock_edge_ver_c;
+     lf->deblock_chroma[1] = deblock_edge_hor_c;
+ 
+-#if HAVE_MMX
++#if HAVE_MMX && ARCH_X86_64 /* only 64-bit asm for now */
+     if (cpuid & XAVS2_CPU_SSE42) {
+         lf->deblock_luma[0] = deblock_edge_ver_sse128;
+         lf->deblock_luma[1] = deblock_edge_hor_sse128;
+--- xavs2-1.3/source/common/filter_sao.c.orig	2018-12-20 04:20:35.000000000 +0100
++++ xavs2-1.3/source/common/filter_sao.c	2019-07-29 20:10:02.731863168 +0200
+@@ -234,7 +234,7 @@
+ void xavs2_sao_init(uint32_t cpuid, intrinsic_func_t *pf)
+ {
+     pf->sao_block = sao_block_c;
+-#if HAVE_MMX
++#if HAVE_MMX && ARCH_X86_64 /* only 64-bit asm for now */
+     if (cpuid & XAVS2_CPU_SSE4) {
+         pf->sao_block = SAO_on_block_sse128;
+     }
+--- xavs2-1.3/source/common/cg_scan.c.orig	2018-12-20 04:20:35.000000000 +0100
++++ xavs2-1.3/source/common/cg_scan.c	2019-07-29 20:12:49.534292855 +0200
+@@ -977,7 +977,7 @@
+     pf->transpose_coeff_4x4[0] = coeff_scan4_xy_c;
+     pf->transpose_coeff_4x4[1] = coeff_scan4_yx_c;
+ 
+-#if HAVE_MMX
++#if HAVE_MMX && ARCH_X86_64 /* only 64-bit asm for now */
+     /* SSE 128bit */
+     if (cpuid & XAVS2_CPU_SSE42) {
+         pf->transpose_coeff_scan[LUMA_4x4][0] = coeff_scan_4x4_xy_sse128;
+--- xavs2-1.3/source/common/intra.c.orig	2018-12-20 04:20:35.000000000 +0100
++++ xavs2-1.3/source/common/intra.c	2019-07-29 20:13:42.964003401 +0200
+@@ -1918,7 +1918,7 @@
+     ipred[INTRA_ANG_Y_32]  = intra_pred_ang_y_32_c;
+ 
+     // TODO: 8bit情况下角度7、9、11性能不一致   20170716 
+-#if HAVE_MMX
++#if HAVE_MMX && ARCH_X86_64 /* only 64-bit asm for now */
+     if (cpuid & XAVS2_CPU_SSE42) {
+         ipred[DC_PRED        ] = intra_pred_dc_sse128;
+         ipred[HOR_PRED       ] = intra_pred_hor_sse128;
+--- xavs2-1.3/source/common/mc.c.orig	2018-12-20 04:20:35.000000000 +0100
++++ xavs2-1.3/source/common/mc.c	2019-07-29 20:17:32.919424292 +0200
+@@ -898,7 +898,9 @@
+     }
+ 
+     if (cpuid & XAVS2_CPU_SSE2) {
++#if ARCH_X86_64
+         pf->memzero_aligned = xavs2_memzero_aligned_c_sse2;
++#endif
+         // pf->memcpy_aligned  = xavs2_memcpy_aligned_c_sse2;
+         pf->lowres_filter  = xavs2_lowres_filter_core_sse2;
+         // pf->mem_repeat_i  = xavs2_mem_repeat_i_c_sse2;  // TODO: 比C版本慢，禁用
+@@ -909,7 +911,9 @@
+     }
+ 
+     if (cpuid & XAVS2_CPU_AVX2) {
++#if ARCH_X86_64
+         pf->memzero_aligned = xavs2_memzero_aligned_c_avx;
++#endif
+         // pf->mem_repeat_i    = xavs2_mem_repeat_i_c_avx;  // TODO: 比C版本慢，禁用
+         pf->lowres_filter   = xavs2_lowres_filter_core_avx;
+     }
+@@ -951,6 +955,7 @@
+         pf->plane_copy_deinterleave = xavs2_plane_copy_deinterleave_mmx;
+     }
+ 
++#if ARCH_X86_64
+     if (cpuid & XAVS2_CPU_SSE42) {
+         pf->intpl_luma_hor = intpl_luma_hor_sse128;
+         pf->intpl_luma_ver = intpl_luma_ver_sse128;
+@@ -985,6 +990,7 @@
+         pf->intpl_chroma_block_hor = intpl_chroma_block_hor_avx2;
+         pf->intpl_chroma_block_ext = intpl_chroma_block_ext_avx2;
+     }
++#endif
+ #else
+     UNUSED_PARAMETER(cpuid);
+ #endif
+--- xavs2-1.3/source/common/pixel.c.orig	2018-12-20 04:20:35.000000000 +0100
++++ xavs2-1.3/source/common/pixel.c	2019-07-29 20:18:47.595686403 +0200
+@@ -1594,6 +1594,7 @@
+         INIT_PIXEL_AVG(16, 12, avx2);
+     }
+ 
++#if ARCH_X86_64
+     /* block average */
+     if (cpuid & XAVS2_CPU_SSE42) {
+         pixf->average = xavs2_pixel_average_sse128;
+@@ -1604,6 +1605,7 @@
+     }
+ #endif
+ #endif
++#endif
+ 
+     /* init functions of block operation : copy/add/sub */
+     init_block_opreation_funcs(cpuid, pixf);
+@@ -1659,7 +1661,7 @@
+     madf[B64X64_IN_BIT - MIN_CU_SIZE_IN_BIT] = mad_NxN_c;
+ 
+     /* init asm function handles */
+-#if HAVE_MMX
++#if HAVE_MMX && ARCH_X86_64 /* only 64-bit asm for now */
+     /* functions defined in file intrinsic_mad.c */
+     if (cpuid & XAVS2_CPU_SSE2) {
+         madf[B16X16_IN_BIT - MIN_CU_SIZE_IN_BIT] = mad_16x16_sse128;
+--- xavs2-1.3/source/common/transform.c.orig	2018-12-20 04:20:35.000000000 +0100
++++ xavs2-1.3/source/common/transform.c	2019-07-29 20:26:10.506620282 +0200
+@@ -1647,6 +1647,7 @@
+      * set handles with asm functions
+      */
+ 
++#if ARCH_X86_64
+     /* functions defined in file intrinsic_dct.c */
+     if (cpuid & XAVS2_CPU_SSE42) {
+         /* dct: square */
+@@ -1689,6 +1690,7 @@
+         dctf->dct_half[LUMA_32x32] = dct_c_32x32_half_sse128;
+         dctf->dct_half[LUMA_64x64] = dct_c_64x64_half_sse128;
+     }
++#endif
+ 
+     if (cpuid & XAVS2_CPU_SSE2) {
+         dctf->dct [LUMA_4x4  ] = xavs2_dct_4x4_sse2;
