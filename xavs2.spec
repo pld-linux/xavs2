@@ -7,15 +7,16 @@
 Summary:	Open-source encoder of AVS2-P2/IEEE1857.4 video coding standard
 Summary(pl.UTF-8):	Koder standardu kodowania obrazu AVS2-P2/IEEE1857.4 o otwartych źródłach
 Name:		xavs2
-Version:	1.3
-Release:	2
+Version:	1.4
+Release:	1
 License:	GPL v2+
 Group:		Libraries
-#Source0Download: https://github.com/pkuvcl/xavs2/releases
+#Source0Download: https://github.com/pkuvcl/xavs2/tags
 Source0:	https://github.com/pkuvcl/xavs2/archive/%{version}/%{name}-%{version}.tar.gz
-# Source0-md5:	14995147d36e633f1155c8fea7269bea
+# Source0-md5:	b776941aad474fed23da1d1eb0c0b720
 Patch0:		%{name}-asm-arch.patch
 Patch1:		%{name}-opt.patch
+Patch2:		%{name}-x86.patch
 URL:		https://github.com/pkuvcl/xavs2
 %{?with_opencl:BuildRequires:	OpenCL-devel}
 %{?with_lsmash:BuildRequires:	l-smash-devel >= 1.5}
@@ -61,6 +62,7 @@ Statyczna biblioteka xavs2.
 %setup -q
 %patch0 -p1
 %patch1 -p1
+%patch2 -p1
 
 %build
 cd build/linux
